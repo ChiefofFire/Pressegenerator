@@ -350,3 +350,7 @@ $('btn-stichwort-add').addEventListener('click', addCurrentStichwort);
 $('btn-stichwort-reset').addEventListener('click', resetStichwoerter);
 renderStichwortDatalist();
 updatePreview();
+// --- Sicherstellen, dass das Menü initial Inhalt zeigt ---
+renderUnitsMenu('');
+$('units-menu').hidden = false;        // sichtbar
+setTimeout(()=>{ $('units-menu').hidden = true; }, 0); // danach wieder zu – Nutzer öffnet dann selbst
