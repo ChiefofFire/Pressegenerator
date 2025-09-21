@@ -1,4 +1,4 @@
-const CACHE = 'presse-v4';
+const CACHE = 'presse-v5';
 const ASSETS = ['.', 'index.html', 'script.js', 'manifest.json'];
 
 self.addEventListener('install', e=>{
