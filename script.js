@@ -13,7 +13,7 @@ function buildText() {
   const foto = $('foto').value || '';
 
   return [
-    `Pressemitteilung der Feuerwehr Meyenfeld`,
+    `Pressemitteilung der Feuerwehr Garbsen`,
     ``,
     `Einsatz: ${stw}`,
     `Datum/Zeit: ${d} – ${t}`,
@@ -75,7 +75,7 @@ async function exportPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'pt', format:'a4' });
 
-  const title = 'Pressemitteilung – Feuerwehr Meyenfeld';
+  const title = 'Pressemitteilung – Feuerwehr Garbsen';
   doc.setFont('helvetica','bold'); doc.setFontSize(16);
   doc.text(title, 40, 50);
 
@@ -93,7 +93,7 @@ async function exportPDF(){
 }
 
 function openMail(){
-  const subject = encodeURIComponent('Pressemitteilung Feuerwehr Meyenfeld');
+  const subject = encodeURIComponent('Pressemitteilung Feuerwehr Garbsen');
   const body = encodeURIComponent(buildText());
   window.location.href = `mailto:?subject=${subject}&body=${body}`;
 }
