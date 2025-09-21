@@ -7,13 +7,91 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#e30613">
   <link rel="icon" href="icons/icon-192.png">
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:0;background:#f6f6f7;color:#111}
+    header{background:#e30613;color:#fff;padding:12px 16px;font-weight:700}
+    main{max-width:900px;margin:0 auto;padding:16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:16px}
+    label{font-size:14px;font-weight:600;display:block;margin:12px 0 4px}
+    input,textarea,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;background:#fff}
+    textarea{min-height:110px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    button{border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+    .primary{background:#e30613;color:#fff}
+    .secondary{background:#111;color:#fff}
+    .ghost{background:#fff;color:#111;border:1px solid #d1d5db}
+    footer{color:#6b7280;text-align:center;padding:16px}
+    .hint{font-size:12px;color:#6b7280}
+  </style>
 </head>
 <body>
-  <h1>Pressebericht Generator</h1>
-  <p>App läuft! Inhalte siehe script.js</p>
-  <script src="script.js"></script>
-  <script>
-    if ('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
-  </script>
+<header>Pressebericht Generator (Feuerwehr)</header>
+<main>
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Datum</label><input id="datum" type="date">
+      </div>
+      <div>
+        <label>Uhrzeit</label><input id="uhrzeit" type="time">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Ort</label><input id="ort" placeholder="z. B. B6, Richtung Hannover / Kastendamm 234, Garbsen">
+      </div>
+      <div>
+        <label>Alarmstichwort</label>
+        <input id="stichwort" placeholder="z. B. B1 Feuer in Garage">
+      </div>
+    </div>
+
+    <label>Gemeldete Lage</label>
+    <input id="lage" placeholder="z. B. Rauchentwicklung aus Garage">
+
+    <label>Beschreibung / Maßnahmen</label>
+    <textarea id="beschreibung" placeholder="Was wurde vorgefunden? Welche Maßnahmen? Verletzte? Besondere Gefahren?"></textarea>
+
+    <label>Kräfte vor Ort</label>
+    <textarea id="kraefte" placeholder="z. B. FF Meyenfeld, FF Horst, RW Garbsen, RD, Polizei"></textarea>
+
+    <div class="row">
+      <div>
+        <label>Ansprechpartner (Presse)</label><input id="kontaktName" placeholder="z. B. Maxi Muster">
+      </div>
+      <div>
+        <label>Kontakt (Telefon/E-Mail)</label><input id="kontakt" placeholder="z. B. 0176… / presse@feuerwehr-meyenfeld.de">
+      </div>
+    </div>
+
+    <label>Fotohinweis</label>
+    <input id="foto" placeholder="z. B. Symbolfoto / 2 Einsatzfotos verfügbar">
+
+    <div class="btns">
+      <button class="ghost" id="btn-autotext">Auto-Text füllen</button>
+      <button class="secondary" id="btn-vorschau">Vorschau</button>
+      <button class="primary" id="btn-pdf">Als PDF exportieren</button>
+      <button class="ghost" id="btn-mail">Als E-Mail öffnen</button>
+      <button class="ghost" id="btn-save">Speichern</button>
+      <button class="ghost" id="btn-load">Letzten Laden</button>
+      <button class="ghost" id="btn-clear">Leeren</button>
+    </div>
+    <p class="hint">Offline nutzbar. Daten bleiben lokal im Browser.</p>
+  </div>
+
+  <div class="card">
+    <label>Vorschau</label>
+    <textarea id="preview" readonly></textarea>
+  </div>
+</main>
+<footer>© Feuerwehr Meyenfeld – Pressebericht Generator • PWA</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="script.js"></script>
+<script>
+  if ('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+</script>
 </body>
 </html>
