@@ -1,21 +1,10 @@
 const $ = id => document.getElementById(id);
 
-function buildText() {
-  const d = $('datum').value || '—';
-  const t = $('uhrzeit').value || '—';
-  const ort = $('ort').value || '—';
-  const stw = $('stichwort').value || '—';
-  const lage = $('lage').value || '—';
-  const beschr = $('beschreibung').value || '—';
-  const kraefte = $('kraefte').value || '—';
-  const kname = $('kontaktName').value || '—';
-  const kontakt = $('kontakt').value || '—';
-  const foto = $('foto').value || '';
-
-  // --------- Stichwort-Liste (dynamisch + persistent) ----------
+/* ===========================
+   Stichwort-Liste (dynamisch)
+   =========================== */
 const STW_KEY = 'stichwortOptions_v1';
 
-// sinnvolle Standard-Stichwörter
 const defaultStichwoerter = [
   "B1 Kleinbrand",
   "B2 Mittelbrand",
@@ -62,12 +51,8 @@ function addCurrentStichwort(){
   if(!val) return alert('Bitte zuerst ein Stichwort eingeben.');
   let list = loadStichwortOptions();
   const exists = list.some(x => x.toLowerCase() === val.toLowerCase());
-  if(exists) {
-    alert('Dieses Stichwort ist bereits in der Liste.');
-    return;
-  }
+  if(exists) { alert('Dieses Stichwort ist bereits in der Liste.'); return; }
   list.push(val);
-  // optional: sortieren, eigene Einträge nach oben
   list = [...new Set(list)].sort((a,b)=>a.localeCompare(b,'de'));
   saveStichwortOptions(list);
   renderStichwortDatalist();
@@ -75,15 +60,29 @@ function addCurrentStichwort(){
 }
 
 function resetStichwoerter(){
-  if(!confirm('Liste auf Standard zurücksetzen? (Nur diese Gerät)')) return;
+  if(!confirm('Liste auf Standard zurücksetzen? (Nur dieses Gerät)')) return;
   saveStichwortOptions(defaultStichwoerter);
   renderStichwortDatalist();
   alert('Liste zurückgesetzt.');
 }
 
+/* ===========================
+   Presse-Text Generator
+   =========================== */
+function buildText() {
+  const d = $('datum').value || '—';
+  const t = $('uhrzeit').value || '—';
+  const ort = $('ort').value || '—';
+  const stw = $('stichwort').value || '—';
+  const lage = $('lage').value || '—';
+  const beschr = $('beschreibung').value || '—';
+  const kraefte = $('kraefte').value || '—';
+  const kname = $('kontaktName').value || '—';
+  const kontakt = $('kontakt').value || '—';
+  const foto = $('foto').value || '';
 
   return [
-    `Pressemitteilung der Feuerwehr Garbsen`,
+    `Pressemitteilung der Feuerwehr Meyenfeld`,
     ``,
     `Einsatz: ${stw}`,
     `Datum/Zeit: ${d} – ${t}`,
@@ -107,7 +106,7 @@ function fillAutoText(){
   $('uhrzeit').value ||= jetzt.toTimeString().slice(0,5);
   if(!$('beschreibung').value){
     $('beschreibung').value =
-`Bei Eintreffen bestätigte sich die Lage. Ein Trupp unter PA erkundete die betroffene Einheit und führte erste Maßnahmen durch. Die Einsatzstelle wurde abgesichert und die betroffene Bereich stromlos geschaltet. Nach Abschluss der Maßnahmen wurde die Einsatzstelle an die Polizei übergeben.`;
+`Bei Eintreffen bestätigte sich die Lage. Ein Trupp unter PA erkundete die betroffene Einheit und führte erste Maßnahmen durch. Die Einsatzstelle wurde abgesichert und der betroffene Bereich stromlos geschaltet. Nach Abschluss der Maßnahmen wurde die Einsatzstelle an die Polizei übergeben.`;
   }
   if(!$('kraefte').value){
     $('kraefte').value = `FF Meyenfeld, weitere Ortsfeuerwehren nach Alarmplan, Rüstwagen Garbsen, Rettungsdienst, Polizei`;
@@ -119,6 +118,9 @@ function updatePreview(){
   $('preview').value = buildText();
 }
 
+/* ===========================
+   Draft speichern/laden
+   =========================== */
 function saveDraft(){
   const fields = ['datum','uhrzeit','ort','stichwort','lage','beschreibung','kraefte','kontaktName','kontakt','foto'];
   const data = {};
@@ -130,58 +132,4 @@ function saveDraft(){
 function loadDraft(){
   const raw = localStorage.getItem('presseEntwurf');
   if(!raw) return alert('Kein Entwurf gefunden.');
-  const data = JSON.parse(raw);
-  Object.entries(data).forEach(([k,v]) => { if($(k)) $(k).value = v; });
-  updatePreview();
-}
-
-function clearForm(){
-  ['datum','uhrzeit','ort','stichwort','lage','beschreibung','kraefte','kontaktName','kontakt','foto']
-    .forEach(id => $(id).value = '');
-  updatePreview();
-}
-
-async function exportPDF(){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'pt', format:'a4' });
-
-  const title = 'Pressemitteilung – Feuerwehr Garbsen';
-  doc.setFont('helvetica','bold'); doc.setFontSize(16);
-  doc.text(title, 40, 50);
-
-  doc.setFont('helvetica','normal'); doc.setFontSize(11);
-  const text = buildText();
-  const lines = doc.splitTextToSize(text, 515);
-  doc.text(lines, 40, 80);
-
-  // Footer
-  const ts = new Date().toLocaleString();
-  doc.setFontSize(9);
-  doc.text(`Generiert am ${ts}`, 40, 800);
-
-  doc.save(`Pressemitteilung_${new Date().toISOString().slice(0,10)}.pdf`);
-}
-
-function openMail(){
-  const subject = encodeURIComponent('Pressemitteilung Feuerwehr Garbsen');
-  const body = encodeURIComponent(buildText());
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
-}
-
-// Event bindings
-['datum','uhrzeit','ort','stichwort','lage','beschreibung','kraefte','kontaktName','kontakt','foto']
-  .forEach(id => $(id).addEventListener('input', updatePreview));
-
-$('btn-vorschau').addEventListener('click', updatePreview);
-$('btn-autotext').addEventListener('click', fillAutoText);
-$('btn-save').addEventListener('click', saveDraft);
-$('btn-load').addEventListener('click', loadDraft);
-$('btn-clear').addEventListener('click', clearForm);
-$('btn-pdf').addEventListener('click', exportPDF);
-$('btn-mail').addEventListener('click', openMail);
-$('btn-stichwort-add').addEventListener('click', addCurrentStichwort);
-$('btn-stichwort-reset').addEventListener('click', resetStichwoerter);
-
-// Init
-renderStichwortDatalist();
-updatePreview();
+  const data = JSON.parse(raw)
