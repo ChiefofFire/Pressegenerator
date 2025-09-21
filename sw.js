@@ -1,4 +1,4 @@
-const CACHE = 'presse-v3'; // Version hochsetzen, wenn du Dateien änderst
+const CACHE = 'presse-v4';
 const ASSETS = ['.', 'index.html', 'script.js', 'manifest.json'];
 
 self.addEventListener('install', e=>{
@@ -12,7 +12,6 @@ self.addEventListener('activate', e=>{
   self.clients.claim();
 });
 self.addEventListener('fetch', e=>{
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
-  );
+  e.respondWith(caches.match(e.request).then(r=>r || fetch(e.request)));
 });
+
