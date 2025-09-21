@@ -179,6 +179,9 @@ $('btn-load').addEventListener('click', loadDraft);
 $('btn-clear').addEventListener('click', clearForm);
 $('btn-pdf').addEventListener('click', exportPDF);
 $('btn-mail').addEventListener('click', openMail);
+$('btn-stichwort-add').addEventListener('click', addCurrentStichwort);
+$('btn-stichwort-reset').addEventListener('click', resetStichwoerter);
 
 // Init
+renderStichwortDatalist();
 updatePreview();
