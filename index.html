@@ -16,7 +16,6 @@
       --maxw:900px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
       background:var(--bg); color:var(--fg);
@@ -32,43 +31,44 @@
       padding:var(--pad); margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,.04);
     }
     label{font-size:14px; font-weight:600; display:block; margin:12px 0 6px}
-    input,textarea,select,button{font-size:16px}
-    input,textarea,select{
-      width:100%; padding:12px 12px; border:1px solid var(--border-strong);
-      border-radius:8px; background:#fff; color:var(--fg);
+    input,textarea,button{font-size:16px}
+    input,textarea{
+      width:100%; padding:12px; border:1px solid var(--border-strong);
+      border-radius:8px; background:#fff;
     }
-    textarea{min-height:140px; line-height:1.4}
+    textarea{min-height:140px}
     .row{display:grid; grid-template-columns:1fr; gap:var(--gap)}
-    @media (min-width:640px){
-      .row.resp-2{grid-template-columns:1fr 1fr}
-      .row.resp-3{grid-template-columns:1fr auto auto}
-    }
+    @media (min-width:640px){ .row.resp-2{grid-template-columns:1fr 1fr} .row.resp-3{grid-template-columns:1fr auto auto} }
     .btns{display:grid; gap:8px; grid-template-columns:1fr; margin-top:12px}
     @media (min-width:480px){ .btns{grid-template-columns:1fr 1fr} }
     @media (min-width:820px){ .btns{grid-template-columns:repeat(3,1fr)} }
     button{border:0; padding:12px 14px; border-radius:10px; cursor:pointer; width:100%}
     .primary{background:var(--brand); color:#fff}
-    .secondary{background:var(--ink); color:#fff}
-    .ghost{background:#fff; color:var(--ink); border:1px solid var(--border-strong)}
+    .secondary{background:#111; color:#fff}
+    .ghost{background:#fff; color:#111; border:1px solid var(--border-strong)}
     footer{color:var(--muted); text-align:center; padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom))}
-    .hint{font-size:12px; color:var(--muted); margin-top:6px}
-    input:focus, textarea:focus, select:focus, button:focus{outline:2px solid rgba(227,6,19,.35); outline-offset:2px}
+    .hint{font-size:12px; color:var(--muted)}
 
-    /* Eigene Vorschlagsliste (Dropdown) */
+    /* Vorschlagsliste */
     .stw{ position:relative; }
     .suggest[hidden]{ display:none; }
     .suggest{
       position:absolute; top:100%; left:0; right:0;
       background:#fff; border:1px solid #d1d5db; border-radius:8px;
       max-height:220px; overflow:auto; z-index:20; margin-top:4px;
-      box-shadow:0 6px 16px rgba(0,0,0,.08);
     }
-    .suggest li{
-      list-style:none; padding:10px 12px; cursor:pointer; user-select:none;
-      border-bottom:1px solid #f1f5f9;
-    }
-    .suggest li:last-child{ border-bottom:0; }
-    .suggest li:hover, .suggest li.active{ background:#f3f4f6; }
+    .suggest li{list-style:none; padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9;}
+    .suggest li.active, .suggest li:hover{background:#f3f4f6}
+
+    /* Multi-Select Kräfte */
+    .multi{position:relative;}
+    .chips{display:flex; flex-wrap:wrap; gap:6px; padding:8px; border:1px solid #d1d5db; border-radius:8px; background:#fff;}
+    .chip{display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border:1px solid #e5e7eb; border-radius:999px; background:#f9fafb; font-size:14px;}
+    .chip button{border:0; background:transparent; cursor:pointer;}
+    .menu[hidden]{display:none;}
+    .menu{position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #d1d5db; border-radius:8px; z-index:30; max-height:260px; overflow:auto;}
+    .menu li{list-style:none; border-bottom:1px solid #f1f5f9;}
+    .menu label{display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer;}
   </style>
 </head>
 <body>
@@ -76,77 +76,68 @@
 <main>
   <div class="card">
     <div class="row resp-2">
-      <div>
-        <label>Datum</label><input id="datum" type="date" autocomplete="off">
-      </div>
-      <div>
-        <label>Uhrzeit</label><input id="uhrzeit" type="time" autocomplete="off">
-      </div>
+      <div><label>Datum</label><input id="datum" type="date"></div>
+      <div><label>Uhrzeit</label><input id="uhrzeit" type="time"></div>
     </div>
 
     <div class="row resp-2">
-      <div>
-        <label>Ort</label>
-        <input id="ort" placeholder="z. B. B6, Richtung Hannover / Kastendamm 234, Garbsen" autocomplete="street-address">
-      </div>
+      <div><label>Ort</label><input id="ort" placeholder="z. B. Kastendamm 234, Garbsen"></div>
       <div>
         <label>Alarmstichwort</label>
         <div class="row resp-3">
           <div class="stw">
-            <input id="stichwort" placeholder="z. B. B1 Feuer in Garage" autocomplete="off" inputmode="text">
-            <!-- Eigene Vorschlagsliste -->
+            <input id="stichwort" placeholder="z. B. B1 Feuer in Garage">
             <ul id="stw-suggest" class="suggest" hidden></ul>
-            <!-- Optionaler datalist-Fallback -->
             <datalist id="stichwort-list"></datalist>
           </div>
-          <button type="button" class="ghost" id="btn-stichwort-add" title="Aktuellen Eintrag zur Liste speichern">➕</button>
-          <button type="button" class="ghost" id="btn-stichwort-reset" title="Liste zurücksetzen (Standard)">↺</button>
+          <button type="button" class="ghost" id="btn-stichwort-add">➕</button>
+          <button type="button" class="ghost" id="btn-stichwort-reset">↺</button>
         </div>
-        <p class="hint">Tipp: Tippe frei oder wähle einen Vorschlag. Mit ➕ speicherst du neue Stichwörter (lokal).</p>
       </div>
     </div>
 
     <label>Gemeldete Lage</label>
-    <input id="lage" placeholder="z. B. Rauchentwicklung aus Garage">
+    <input id="lage">
 
     <label>Beschreibung / Maßnahmen</label>
-    <textarea id="beschreibung" placeholder="Was wurde vorgefunden? Welche Maßnahmen? Verletzte? Besondere Gefahren?"></textarea>
+    <textarea id="beschreibung"></textarea>
 
     <label>Kräfte vor Ort</label>
-    <textarea id="kraefte" placeholder="z. B. FF Meyenfeld, FF Horst, RW Garbsen, RD, Polizei"></textarea>
+    <div class="multi" id="units-field">
+      <div id="units-chips" class="chips"></div>
+      <input id="units-filter" type="text" placeholder="Einheit suchen oder neu eingeben …">
+      <ul id="units-menu" class="menu" hidden></ul>
+    </div>
+    <textarea id="kraefte" placeholder="Weitere Angaben …"></textarea>
 
     <div class="row resp-2">
-      <div>
-        <label>Ansprechpartner (Presse)</label><input id="kontaktName" placeholder="z. B. Maxi Muster" autocomplete="name">
-      </div>
-      <div>
-        <label>Kontakt (Telefon/E-Mail)</label><input id="kontakt" placeholder="z. B. 0176… / presse@feuerwehr-meyenfeld.de" autocomplete="email">
-      </div>
+      <div><label>Ansprechpartner</label><input id="kontaktName"></div>
+      <div><label>Kontakt</label><input id="kontakt"></div>
     </div>
 
     <label>Fotohinweis</label>
-    <input id="foto" placeholder="z. B. Symbolfoto / 2 Einsatzfotos verfügbar">
+    <input id="foto">
 
     <div class="btns">
-      <button class="ghost" id="btn-autotext">Auto-Text füllen</button>
+      <button class="ghost" id="btn-autotext">Auto-Text</button>
       <button class="secondary" id="btn-vorschau">Vorschau</button>
-      <button class="primary" id="btn-pdf">Als PDF exportieren</button>
-      <button class="ghost" id="btn-mail">Als E-Mail öffnen</button>
+      <button class="primary" id="btn-pdf">Als PDF</button>
+      <button class="ghost" id="btn-mail">Mail öffnen</button>
       <button class="ghost" id="btn-save">Speichern</button>
-      <button class="ghost" id="btn-load">Letzten Laden</button>
+      <button class="ghost" id="btn-load">Laden</button>
       <button class="ghost" id="btn-clear">Leeren</button>
     </div>
-    <p class="hint">Offline nutzbar. Daten bleiben lokal im Browser.</p>
   </div>
 
   <div class="card">
     <label>Vorschau</label>
-    <textarea id="preview" readonly style="min-height:220px"></textarea>
+    <textarea id="preview" readonly></textarea>
   </div>
 </main>
-<footer>© Feuerwehr Meyenfeld – Pressebericht Generator • PWA</footer>
+<footer>© Feuerwehr Meyenfeld</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="script.js"></script>
-<script>
-  if ('serviceWorker' in navigator){ navigator.serviceWorker.register('s
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}</script>
+</body>
+</html>
