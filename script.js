@@ -211,7 +211,11 @@ function resetUnits(){
 
 $('units-chips').addEventListener('click', e=>{
   $('units-menu').hidden = false;
-  $('units-filter').focus();
+  $('units-filter').addEventListener('focus', ()=>{
+  // kleiner Delay, weil manche Browser das DOM erst nach Fokus korrekt messen
+  setTimeout(()=> renderUnitsMenu($('units-filter').value || ''), 0);
+});
+
 });
 $('units-chips').addEventListener('click', e=>{
   const btn = e.target.closest('button[data-unit]');
