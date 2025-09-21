@@ -2,42 +2,151 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Pressebericht Generator</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#e30613">
   <link rel="icon" href="icons/icon-192.png">
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:0;background:#f6f6f7;color:#111}
-    header{background:#e30613;color:#fff;padding:12px 16px;font-weight:700}
-    main{max-width:900px;margin:0 auto;padding:16px}
-    .card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:16px}
-    label{font-size:14px;font-weight:600;display:block;margin:12px 0 4px}
-    input,textarea,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;background:#fff}
-    textarea{min-height:110px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-    button{border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
-    .primary{background:#e30613;color:#fff}
-    .secondary{background:#111;color:#fff}
-    .ghost{background:#fff;color:#111;border:1px solid #d1d5db}
-    footer{color:#6b7280;text-align:center;padding:16px}
-    .hint{font-size:12px;color:#6b7280}
+    :root{
+      --bg:#f6f6f7; --fg:#111; --muted:#6b7280;
+      --border:#e5e7eb; --border-strong:#d1d5db;
+      --brand:#e30613; --ink:#111;
+      --radius:10px; --pad:14px; --gap:12px;
+      --maxw:900px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
+      background:var(--bg); color:var(--fg);
+      padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+    }
+    header{
+      background:var(--brand); color:#fff; padding:12px 16px; font-weight:700;
+      padding-top:calc(12px + env(safe-area-inset-top));
+    }
+    main{max-width:var(--maxw); margin:0 auto; padding:16px}
+    .card{
+      background:#fff; border:1px solid var(--border); border-radius:var(--radius);
+      padding:var(--pad); margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    label{font-size:14px; font-weight:600; display:block; margin:12px 0 6px}
+    input,textarea,select,button{font-size:16px}
+    input,textarea,select{
+      width:100%; padding:12px 12px; border:1px solid var(--border-strong);
+      border-radius:8px; background:#fff; color:var(--fg);
+    }
+    textarea{min-height:140px; line-height:1.4}
+    .row{display:grid; grid-template-columns:1fr; gap:var(--gap)}
+    @media (min-width:640px){
+      .row.resp-2{grid-template-columns:1fr 1fr}
+      .row.resp-3{grid-template-columns:1fr auto auto}
+    }
+    .btns{display:grid; gap:8px; grid-template-columns:1fr; margin-top:12px}
+    @media (min-width:480px){ .btns{grid-template-columns:1fr 1fr} }
+    @media (min-width:820px){ .btns{grid-template-columns:repeat(3,1fr)} }
+    button{border:0; padding:12px 14px; border-radius:10px; cursor:pointer; width:100%}
+    .primary{background:var(--brand); color:#fff}
+    .secondary{background:var(--ink); color:#fff}
+    .ghost{background:#fff; color:var(--ink); border:1px solid var(--border-strong)}
+    footer{color:var(--muted); text-align:center; padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+    .hint{font-size:12px; color:var(--muted); margin-top:6px}
+    input:focus, textarea:focus, select:focus, button:focus{outline:2px solid rgba(227,6,19,.35); outline-offset:2px}
+
+    /* Eigene Vorschlagsliste (Dropdown) */
+    .stw{ position:relative; }
+    .suggest[hidden]{ display:none; }
+    .suggest{
+      position:absolute; top:100%; left:0; right:0;
+      background:#fff; border:1px solid #d1d5db; border-radius:8px;
+      max-height:220px; overflow:auto; z-index:20; margin-top:4px;
+      box-shadow:0 6px 16px rgba(0,0,0,.08);
+    }
+    .suggest li{
+      list-style:none; padding:10px 12px; cursor:pointer; user-select:none;
+      border-bottom:1px solid #f1f5f9;
+    }
+    .suggest li:last-child{ border-bottom:0; }
+    .suggest li:hover, .suggest li.active{ background:#f3f4f6; }
   </style>
 </head>
 <body>
 <header>Pressebericht Generator (Feuerwehr)</header>
 <main>
   <div class="card">
-    <div class="row">
+    <div class="row resp-2">
       <div>
-        <label>Datum</label><input id="datum" type="date">
+        <label>Datum</label><input id="datum" type="date" autocomplete="off">
       </div>
       <div>
-        <label>Uhrzeit</label><input id="uhrzeit" type="time">
+        <label>Uhrzeit</label><input id="uhrzeit" type="time" autocomplete="off">
       </div>
     </div>
 
-    <div class="row">
+    <div class="row resp-2">
       <div>
-        <label>Ort</label><input id="ort" placeholder="z. B. B6, Richtung Hann
+        <label>Ort</label>
+        <input id="ort" placeholder="z. B. B6, Richtung Hannover / Kastendamm 234, Garbsen" autocomplete="street-address">
+      </div>
+      <div>
+        <label>Alarmstichwort</label>
+        <div class="row resp-3">
+          <div class="stw">
+            <input id="stichwort" placeholder="z. B. B1 Feuer in Garage" autocomplete="off" inputmode="text">
+            <!-- Eigene Vorschlagsliste -->
+            <ul id="stw-suggest" class="suggest" hidden></ul>
+            <!-- Optionaler datalist-Fallback -->
+            <datalist id="stichwort-list"></datalist>
+          </div>
+          <button type="button" class="ghost" id="btn-stichwort-add" title="Aktuellen Eintrag zur Liste speichern">➕</button>
+          <button type="button" class="ghost" id="btn-stichwort-reset" title="Liste zurücksetzen (Standard)">↺</button>
+        </div>
+        <p class="hint">Tipp: Tippe frei oder wähle einen Vorschlag. Mit ➕ speicherst du neue Stichwörter (lokal).</p>
+      </div>
+    </div>
+
+    <label>Gemeldete Lage</label>
+    <input id="lage" placeholder="z. B. Rauchentwicklung aus Garage">
+
+    <label>Beschreibung / Maßnahmen</label>
+    <textarea id="beschreibung" placeholder="Was wurde vorgefunden? Welche Maßnahmen? Verletzte? Besondere Gefahren?"></textarea>
+
+    <label>Kräfte vor Ort</label>
+    <textarea id="kraefte" placeholder="z. B. FF Meyenfeld, FF Horst, RW Garbsen, RD, Polizei"></textarea>
+
+    <div class="row resp-2">
+      <div>
+        <label>Ansprechpartner (Presse)</label><input id="kontaktName" placeholder="z. B. Maxi Muster" autocomplete="name">
+      </div>
+      <div>
+        <label>Kontakt (Telefon/E-Mail)</label><input id="kontakt" placeholder="z. B. 0176… / presse@feuerwehr-meyenfeld.de" autocomplete="email">
+      </div>
+    </div>
+
+    <label>Fotohinweis</label>
+    <input id="foto" placeholder="z. B. Symbolfoto / 2 Einsatzfotos verfügbar">
+
+    <div class="btns">
+      <button class="ghost" id="btn-autotext">Auto-Text füllen</button>
+      <button class="secondary" id="btn-vorschau">Vorschau</button>
+      <button class="primary" id="btn-pdf">Als PDF exportieren</button>
+      <button class="ghost" id="btn-mail">Als E-Mail öffnen</button>
+      <button class="ghost" id="btn-save">Speichern</button>
+      <button class="ghost" id="btn-load">Letzten Laden</button>
+      <button class="ghost" id="btn-clear">Leeren</button>
+    </div>
+    <p class="hint">Offline nutzbar. Daten bleiben lokal im Browser.</p>
+  </div>
+
+  <div class="card">
+    <label>Vorschau</label>
+    <textarea id="preview" readonly style="min-height:220px"></textarea>
+  </div>
+</main>
+<footer>© Feuerwehr Meyenfeld – Pressebericht Generator • PWA</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="script.js"></script>
+<script>
+  if ('serviceWorker' in navigator){ navigator.serviceWorker.register('s
