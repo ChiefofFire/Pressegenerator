@@ -12,6 +12,76 @@ function buildText() {
   const kontakt = $('kontakt').value || '—';
   const foto = $('foto').value || '';
 
+  // --------- Stichwort-Liste (dynamisch + persistent) ----------
+const STW_KEY = 'stichwortOptions_v1';
+
+// sinnvolle Standard-Stichwörter
+const defaultStichwoerter = [
+  "B1 Kleinbrand",
+  "B2 Mittelbrand",
+  "B3 Großbrand",
+  "BMA ausgelöst",
+  "VU PKW",
+  "VU eingeklemmt",
+  "Gasgeruch",
+  "Ölspur",
+  "Wasser im Keller",
+  "Tierrettung",
+  "TH klein",
+  "TH mittel",
+  "TH groß"
+];
+
+function loadStichwortOptions(){
+  try {
+    const raw = localStorage.getItem(STW_KEY);
+    const arr = raw ? JSON.parse(raw) : defaultStichwoerter;
+    return Array.isArray(arr) && arr.length ? arr : defaultStichwoerter;
+  } catch {
+    return defaultStichwoerter;
+  }
+}
+
+function saveStichwortOptions(list){
+  localStorage.setItem(STW_KEY, JSON.stringify(list));
+}
+
+function renderStichwortDatalist(){
+  const list = loadStichwortOptions();
+  const dl = $('stichwort-list');
+  dl.innerHTML = '';
+  list.forEach(opt=>{
+    const o = document.createElement('option');
+    o.value = opt;
+    dl.appendChild(o);
+  });
+}
+
+function addCurrentStichwort(){
+  const val = ($('stichwort').value || '').trim();
+  if(!val) return alert('Bitte zuerst ein Stichwort eingeben.');
+  let list = loadStichwortOptions();
+  const exists = list.some(x => x.toLowerCase() === val.toLowerCase());
+  if(exists) {
+    alert('Dieses Stichwort ist bereits in der Liste.');
+    return;
+  }
+  list.push(val);
+  // optional: sortieren, eigene Einträge nach oben
+  list = [...new Set(list)].sort((a,b)=>a.localeCompare(b,'de'));
+  saveStichwortOptions(list);
+  renderStichwortDatalist();
+  alert('Stichwort gespeichert.');
+}
+
+function resetStichwoerter(){
+  if(!confirm('Liste auf Standard zurücksetzen? (Nur diese Gerät)')) return;
+  saveStichwortOptions(defaultStichwoerter);
+  renderStichwortDatalist();
+  alert('Liste zurückgesetzt.');
+}
+
+
   return [
     `Pressemitteilung der Feuerwehr Garbsen`,
     ``,
