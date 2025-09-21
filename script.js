@@ -1,10 +1,9 @@
 const $ = id => document.getElementById(id);
 
 /* ===========================
-   Stichwort-Liste (dynamisch)
+   Stichwort-Liste (persistent)
    =========================== */
 const STW_KEY = 'stichwortOptions_v1';
-
 const defaultStichwoerter = [
   "B1 Kleinbrand",
   "B2 Mittelbrand",
@@ -30,14 +29,12 @@ function loadStichwortOptions(){
     return defaultStichwoerter;
   }
 }
-
-function saveStichwortOptions(list){
-  localStorage.setItem(STW_KEY, JSON.stringify(list));
-}
-
+function saveStichwortOptions(list){ localStorage.setItem(STW_KEY, JSON.stringify(list)); }
 function renderStichwortDatalist(){
+  // Desktop-Fallback (optional)
   const list = loadStichwortOptions();
   const dl = $('stichwort-list');
+  if(!dl) return;
   dl.innerHTML = '';
   list.forEach(opt=>{
     const o = document.createElement('option');
@@ -45,7 +42,6 @@ function renderStichwortDatalist(){
     dl.appendChild(o);
   });
 }
-
 function addCurrentStichwort(){
   const val = ($('stichwort').value || '').trim();
   if(!val) return alert('Bitte zuerst ein Stichwort eingeben.');
@@ -58,7 +54,6 @@ function addCurrentStichwort(){
   renderStichwortDatalist();
   alert('Stichwort gespeichert.');
 }
-
 function resetStichwoerter(){
   if(!confirm('Liste auf Standard zurücksetzen? (Nur dieses Gerät)')) return;
   saveStichwortOptions(defaultStichwoerter);
@@ -66,70 +61,42 @@ function resetStichwoerter(){
   alert('Liste zurückgesetzt.');
 }
 
-/* ===========================
-   Presse-Text Generator
-   =========================== */
-function buildText() {
-  const d = $('datum').value || '—';
-  const t = $('uhrzeit').value || '—';
-  const ort = $('ort').value || '—';
-  const stw = $('stichwort').value || '—';
-  const lage = $('lage').value || '—';
-  const beschr = $('beschreibung').value || '—';
-  const kraefte = $('kraefte').value || '—';
-  const kname = $('kontaktName').value || '—';
-  const kontakt = $('kontakt').value || '—';
-  const foto = $('foto').value || '';
+/* ==========================================
+   Eigene Vorschlagsliste (mobil-sicher)
+   ========================================== */
+const suggestEl = document.getElementById('stw-suggest');
+let currentItems = [];
+let activeIndex = -1;
 
-  return [
-    `Pressemitteilung der Feuerwehr Meyenfeld`,
-    ``,
-    `Einsatz: ${stw}`,
-    `Datum/Zeit: ${d} – ${t}`,
-    `Einsatzort: ${ort}`,
-    ``,
-    `Gemeldete Lage: ${lage}`,
-    ``,
-    `Lage vor Ort & Maßnahmen:`,
-    `${beschr}`,
-    ``,
-    `Kräfte vor Ort: ${kraefte}`,
-    foto ? `Fotohinweis: ${foto}` : ``,
-    ``,
-    `Ansprechpartner: ${kname} • ${kontakt}`
-  ].filter(Boolean).join('\n');
+function filterStichwoerter(q){
+  const list = loadStichwortOptions();
+  if(!q) return list.slice(0, 10);
+  const needle = q.toLowerCase();
+  return list.filter(v => v.toLowerCase().includes(needle)).slice(0, 20);
 }
-
-function fillAutoText(){
-  const jetzt = new Date();
-  $('datum').value ||= jetzt.toISOString().slice(0,10);
-  $('uhrzeit').value ||= jetzt.toTimeString().slice(0,5);
-  if(!$('beschreibung').value){
-    $('beschreibung').value =
-`Bei Eintreffen bestätigte sich die Lage. Ein Trupp unter PA erkundete die betroffene Einheit und führte erste Maßnahmen durch. Die Einsatzstelle wurde abgesichert und der betroffene Bereich stromlos geschaltet. Nach Abschluss der Maßnahmen wurde die Einsatzstelle an die Polizei übergeben.`;
-  }
-  if(!$('kraefte').value){
-    $('kraefte').value = `FF Meyenfeld, weitere Ortsfeuerwehren nach Alarmplan, Rüstwagen Garbsen, Rettungsdienst, Polizei`;
-  }
-  updatePreview();
+function openSuggest(items){
+  currentItems = items; activeIndex = -1;
+  suggestEl.innerHTML = items.map((v,i)=>`<li data-i="${i}" data-v="${v}">${v}</li>`).join('');
+  suggestEl.hidden = items.length === 0;
 }
+function closeSuggest(){ suggestEl.hidden = true; currentItems = []; activeIndex = -1; }
+function pickValue(v){ $('stichwort').value = v; closeSuggest(); updatePreview(); }
 
-function updatePreview(){
-  $('preview').value = buildText();
-}
-
-/* ===========================
-   Draft speichern/laden
-   =========================== */
-function saveDraft(){
-  const fields = ['datum','uhrzeit','ort','stichwort','lage','beschreibung','kraefte','kontaktName','kontakt','foto'];
-  const data = {};
-  fields.forEach(f => data[f] = $(f).value);
-  localStorage.setItem('presseEntwurf', JSON.stringify(data));
-  alert('Entwurf gespeichert (lokal).');
-}
-
-function loadDraft(){
-  const raw = localStorage.getItem('presseEntwurf');
-  if(!raw) return alert('Kein Entwurf gefunden.');
-  const data = JSON.parse(raw)
+$('stichwort').addEventListener('input', (e)=>{
+  const q = e.target.value;
+  openSuggest(filterStichwoerter(q));
+});
+$('stichwort').addEventListener('focus', (e)=>{
+  openSuggest(filterStichwoerter(e.target.value));
+});
+$('stichwort').addEventListener('blur', ()=>{
+  setTimeout(closeSuggest, 120); // Zeit für Klick
+});
+suggestEl.addEventListener('mousedown', (e)=>{
+  const li = e.target.closest('li'); if(!li) return;
+  pickValue(li.dataset.v);
+});
+$('stichwort').addEventListener('keydown', (e)=>{
+  if(suggestEl.hidden) return;
+  if(e.key === 'ArrowDown'){
+    e.prevent
