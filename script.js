@@ -31,7 +31,6 @@ function loadStichwortOptions(){
 }
 function saveStichwortOptions(list){ localStorage.setItem(STW_KEY, JSON.stringify(list)); }
 function renderStichwortDatalist(){
-  // Desktop-Fallback (optional)
   const list = loadStichwortOptions();
   const dl = $('stichwort-list');
   if(!dl) return;
@@ -90,7 +89,7 @@ $('stichwort').addEventListener('focus', (e)=>{
   openSuggest(filterStichwoerter(e.target.value));
 });
 $('stichwort').addEventListener('blur', ()=>{
-  setTimeout(closeSuggest, 120); // Zeit für Klick
+  setTimeout(closeSuggest, 120);
 });
 suggestEl.addEventListener('mousedown', (e)=>{
   const li = e.target.closest('li'); if(!li) return;
@@ -108,6 +107,138 @@ $('stichwort').addEventListener('keydown', (e)=>{
   [...suggestEl.children].forEach((li,i)=>{ li.classList.toggle('active', i===activeIndex); });
 });
 
+/* ==========================================
+   Mehrfach-Auswahl "Kräfte vor Ort"
+   ========================================== */
+const UNITS_KEY = 'unitsOptions_v1';
+const UNITS_SEL_KEY = 'unitsSelected_v1';
+
+const defaultUnits = [
+  "FF Meyenfeld",
+  "FF Horst",
+  "FF Berenbostel",
+  "FF Heitlingen",
+  "FF Stelingen",
+  "RW Garbsen",
+  "Stadtbrandmeister / ELW",
+  "Rettungsdienst",
+  "Polizei",
+  "Stadtwerke / Energieversorger"
+];
+
+function loadUnitsOptions(){
+  try {
+    const raw = localStorage.getItem(UNITS_KEY);
+    const arr = raw ? JSON.parse(raw) : defaultUnits;
+    return Array.isArray(arr) && arr.length ? arr : defaultUnits;
+  } catch { return defaultUnits; }
+}
+function saveUnitsOptions(list){ localStorage.setItem(UNITS_KEY, JSON.stringify(list)); }
+
+function loadUnitsSelected(){
+  try {
+    const raw = localStorage.getItem(UNITS_SEL_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function saveUnitsSelected(list){
+  localStorage.setItem(UNITS_SEL_KEY, JSON.stringify(list));
+  $('kraefte').value = list.join(', ');
+  updatePreview();
+}
+
+function renderUnitsMenu(filter=''){
+  const all = loadUnitsOptions();
+  const needle = filter.trim().toLowerCase();
+  const items = needle ? all.filter(v => v.toLowerCase().includes(needle)) : all.slice(0, 50);
+
+  const selected = new Set(loadUnitsSelected());
+  const html = items.map(v => `
+    <li>
+      <label>
+        <input type="checkbox" value="${v.replace(/"/g,'&quot;')}" ${selected.has(v)?'checked':''}>
+        <span>${v}</span>
+      </label>
+    </li>`).join('');
+
+  $('units-menu').innerHTML = html || `<li><label><span>Keine Treffer – mit ➕ neu anlegen</span></label></li>`;
+  $('units-menu').hidden = false;
+}
+
+function renderUnitsChips(){
+  const sel = loadUnitsSelected();
+  $('units-chips').innerHTML = sel.map(v => `
+    <span class="chip">
+      ${v}
+      <button type="button" data-unit="${v}" aria-label="${v} entfernen">×</button>
+    </span>`).join('');
+}
+
+function addUnitOptionAndSelect(name){
+  const val = (name || $('units-filter').value || '').trim();
+  if(!val) return alert('Bitte eine Bezeichnung eingeben.');
+  let opts = loadUnitsOptions();
+  if(!opts.some(x => x.toLowerCase() === val.toLowerCase())){
+    opts.push(val);
+    opts = [...new Set(opts)].sort((a,b)=>a.localeCompare(b,'de'));
+    saveUnitsOptions(opts);
+  }
+  let sel = loadUnitsSelected();
+  if(!sel.includes(val)){
+    sel.push(val);
+    sel = [...new Set(sel)];
+    saveUnitsSelected(sel);
+  }
+  $('units-filter').value = '';
+  renderUnitsChips();
+  renderUnitsMenu('');
+}
+
+function resetUnits(){
+  if(!confirm('Einheiten-Liste auf Standard zurücksetzen?')) return;
+  saveUnitsOptions(defaultUnits);
+  saveUnitsSelected([]);
+  renderUnitsChips();
+  $('units-menu').hidden = true;
+  $('kraefte').value = '';
+  updatePreview();
+}
+
+$('units-chips').addEventListener('click', e=>{
+  $('units-menu').hidden = false;
+  $('units-filter').focus();
+});
+$('units-chips').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-unit]');
+  if(!btn) return;
+  const unit = btn.getAttribute('data-unit');
+  let sel = loadUnitsSelected().filter(v => v !== unit);
+  saveUnitsSelected(sel);
+  renderUnitsChips();
+  const cb = [...$('units-menu').querySelectorAll('input[type="checkbox"]')].find(i => i.value === unit);
+  if(cb) cb.checked = false;
+});
+
+$('units-filter').addEventListener('input', e=>{ renderUnitsMenu(e.target.value); });
+$('units-filter').addEventListener('focus', ()=>{ renderUnitsMenu($('units-filter').value); });
+$('units-filter').addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ e.preventDefault(); addUnitOptionAndSelect(); }
+  else if(e.key === 'Escape'){ $('units-menu').hidden = true; }
+});
+$('units-menu').addEventListener('change', e=>{
+  const cb = e.target.closest('input[type="checkbox"]');
+  if(!cb) return;
+  let sel = loadUnitsSelected();
+  if(cb.checked){ if(!sel.includes(cb.value)) sel.push(cb.value); }
+  else { sel = sel.filter(v => v !== cb.value); }
+  saveUnitsSelected(sel);
+  renderUnitsChips();
+});
+
+// Initial render
+renderUnitsChips();
+
 /* ===========================
    Presse-Text Generator
    =========================== */
@@ -118,7 +249,8 @@ function buildText() {
   const stw = $('stichwort').value || '—';
   const lage = $('lage').value || '—';
   const beschr = $('beschreibung').value || '—';
-  const kraefte = $('kraefte').value || '—';
+  const selectedUnits = loadUnitsSelected();
+  const kraefteText = selectedUnits.length ? selectedUnits.join(', ') : ($('kraefte').value || '—');
   const kname = $('kontaktName').value || '—';
   const kontakt = $('kontakt').value || '—';
   const foto = $('foto').value || '';
@@ -135,7 +267,7 @@ function buildText() {
     `Lage vor Ort & Maßnahmen:`,
     `${beschr}`,
     ``,
-    `Kräfte vor Ort: ${kraefte}`,
+    `Kräfte vor Ort: ${kraefteText}`,
     foto ? `Fotohinweis: ${foto}` : ``,
     ``,
     `Ansprechpartner: ${kname} • ${kontakt}`
@@ -146,11 +278,10 @@ function fillAutoText(){
   $('datum').value ||= jetzt.toISOString().slice(0,10);
   $('uhrzeit').value ||= jetzt.toTimeString().slice(0,5);
   if(!$('beschreibung').value){
-    $('beschreibung').value =
-`Bei Eintreffen bestätigte sich die Lage. Ein Trupp unter PA erkundete die betroffene Einheit und führte erste Maßnahmen durch. Die Einsatzstelle wurde abgesichert und der betroffene Bereich stromlos geschaltet. Nach Abschluss der Maßnahmen wurde die Einsatzstelle an die Polizei übergeben.`;
+    $('beschreibung').value = `Bei Eintreffen bestätigte sich die Lage...`;
   }
   if(!$('kraefte').value){
-    $('kraefte').value = `FF Meyenfeld, weitere Ortsfeuerwehren nach Alarmplan, Rüstwagen Garbsen, Rettungsdienst, Polizei`;
+    $('kraefte').value = `FF Meyenfeld, weitere Ortsfeuerwehren, RW Garbsen, Rettungsdienst, Polizei`;
   }
   updatePreview();
 }
@@ -164,42 +295,34 @@ function saveDraft(){
   const data = {};
   fields.forEach(f => data[f] = $(f).value);
   localStorage.setItem('presseEntwurf', JSON.stringify(data));
-  alert('Entwurf gespeichert (lokal).');
+  alert('Entwurf gespeichert.');
 }
 function loadDraft(){
   const raw = localStorage.getItem('presseEntwurf');
   if(!raw) return alert('Kein Entwurf gefunden.');
   const data = JSON.parse(raw);
-  Object.entries(data).forEach(([k,v]) => { if($(k)) $(k).value = v; });
+  Object.entries(data).forEach(([k,v])=>{ if($(k)) $(k).value = v; });
   updatePreview();
 }
 function clearForm(){
-  ['datum','uhrzeit','ort','stichwort','lage','beschreibung','kraefte','kontaktName','kontakt','foto']
-    .forEach(id => $(id).value = '');
+  ['datum','uhrzeit','ort','stichwort','lage','beschreibung','kraefte','kontaktName','kontakt','foto'].forEach(id=>$(id).value='');
+  localStorage.setItem(UNITS_SEL_KEY, JSON.stringify([]));
+  renderUnitsChips();
   updatePreview();
 }
 
 /* ===========================
-   PDF & E-Mail
+   PDF & Mail
    =========================== */
 async function exportPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'pt', format:'a4' });
-
-  const title = 'Pressemitteilung – Feuerwehr Meyenfeld';
   doc.setFont('helvetica','bold'); doc.setFontSize(16);
-  doc.text(title, 40, 50);
-
+  doc.text('Pressemitteilung – Feuerwehr Meyenfeld', 40, 50);
   doc.setFont('helvetica','normal'); doc.setFontSize(11);
-  const text = buildText();
-  const lines = doc.splitTextToSize(text, 515);
+  const lines = doc.splitTextToSize(buildText(), 515);
   doc.text(lines, 40, 80);
-
-  const ts = new Date().toLocaleString();
-  doc.setFontSize(9);
-  doc.text(`Generiert am ${ts}`, 40, 800);
-
-  doc.save(`Pressemitteilung_${new Date().toISOString().slice(0,10)}.pdf`);
+  doc.save('Pressemitteilung.pdf');
 }
 function openMail(){
   const subject = encodeURIComponent('Pressemitteilung Feuerwehr Meyenfeld');
@@ -208,11 +331,10 @@ function openMail(){
 }
 
 /* ===========================
-   Events & Init
+   Events
    =========================== */
 ['datum','uhrzeit','ort','stichwort','lage','beschreibung','kraefte','kontaktName','kontakt','foto']
   .forEach(id => $(id).addEventListener('input', updatePreview));
-
 $('btn-vorschau').addEventListener('click', updatePreview);
 $('btn-autotext').addEventListener('click', fillAutoText);
 $('btn-save').addEventListener('click', saveDraft);
@@ -220,11 +342,7 @@ $('btn-load').addEventListener('click', loadDraft);
 $('btn-clear').addEventListener('click', clearForm);
 $('btn-pdf').addEventListener('click', exportPDF);
 $('btn-mail').addEventListener('click', openMail);
-
-// Stichwort-Buttons
 $('btn-stichwort-add').addEventListener('click', addCurrentStichwort);
 $('btn-stichwort-reset').addEventListener('click', resetStichwoerter);
-
-// Init
-renderStichwortDatalist(); // Desktop-Fallback
+renderStichwortDatalist();
 updatePreview();
