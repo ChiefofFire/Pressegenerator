@@ -149,7 +149,9 @@ function saveUnitsSelected(list){
 }
 
 function renderUnitsMenu(filter=''){
-  const all = loadUnitsOptions();
+  let all = loadUnitsOptions();
+  if (!Array.isArray(all) || all.length === 0) all = defaultUnits.slice(); // Fallback
+
   const needle = filter.trim().toLowerCase();
   const items = needle ? all.filter(v => v.toLowerCase().includes(needle)) : all.slice(0, 50);
 
@@ -162,9 +164,11 @@ function renderUnitsMenu(filter=''){
       </label>
     </li>`).join('');
 
-  $('units-menu').innerHTML = html || `<li><label><span>Keine Treffer – mit ➕ neu anlegen</span></label></li>`;
-  $('units-menu').hidden = false;
+  const menu = $('units-menu');
+  menu.innerHTML = html || `<li><label><span>Keine Treffer – mit ➕ neu anlegen</span></label></li>`;
+  menu.hidden = false; // immer sichtbar machen
 }
+
 
 function renderUnitsChips(){
   const sel = loadUnitsSelected();
