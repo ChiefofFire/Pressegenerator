@@ -44,8 +44,16 @@
       </div>
       <div>
         <label>Alarmstichwort</label>
-        <input id="stichwort" placeholder="z. B. B1 Feuer in Garage">
-      </div>
+<div class="row" style="grid-template-columns: 1fr auto auto;">
+  <div>
+    <input id="stichwort" list="stichwort-list" placeholder="z. B. B1 Feuer in Garage">
+    <datalist id="stichwort-list"></datalist>
+  </div>
+  <button type="button" class="ghost" id="btn-stichwort-add" title="Aktuellen Eintrag zur Liste speichern">➕</button>
+  <button type="button" class="ghost" id="btn-stichwort-reset" title="Liste zurücksetzen (Standard)">↺</button>
+</div>
+<p class="hint">Tipp: Tippe frei oder wähle einen Vorschlag. Mit ➕ speicherst du neue Stichwörter dauerhaft (nur lokal auf diesem Gerät).</p>
+
     </div>
 
     <label>Gemeldete Lage</label>
